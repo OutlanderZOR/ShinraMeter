@@ -46,6 +46,7 @@
 		<ApplicationIcon>shinra.ico</ApplicationIcon>
 	</PropertyGroup>
 	<ItemGroup>
+		<PackageReference Include="EPPlus" Version="8.0.2" />
 		<PackageReference Include="H.NotifyIcon.Wpf" Version="2.3.0" />
 		<PackageReference Include="Microsoft.Windows.Compatibility" Version="9.0.4" />
 		<PackageReference Include="EntityFramework" Version="6.5.1" />

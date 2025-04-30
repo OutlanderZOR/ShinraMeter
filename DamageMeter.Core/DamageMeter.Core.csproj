@@ -10,6 +10,7 @@
     <UseWPF>true</UseWPF>
     <UseWindowsForms>true</UseWindowsForms>
     <TargetFrameworks>net9.0-windows</TargetFrameworks>
+	  <LangVersion>preview</LangVersion>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
 	  <DebugType>embedded</DebugType>
@@ -28,7 +29,7 @@
 	  <PackageReference Include="Microsoft.Windows.Compatibility" Version="9.0.4" />
 	  <PackageReference Include="DiscordRichPresence" Version="1.2.1.24" />
     <PackageReference Include="EntityFramework" Version="6.5.1" />
-    <PackageReference Include="EPPlus" Version="4.5.3.3" />
+    <PackageReference Include="EPPlus" Version="8.0.2" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
     <PackageReference Include="PacketDotNet" Version="1.4.8" />
     <PackageReference Include="Squid-Box.SevenZipSharp" Version="1.6.2.24" />

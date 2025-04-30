@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Drawing;
+using System.Drawing.Imaging;
 using System.Globalization;
 using System.IO;
 using System.Linq;
@@ -18,11 +19,11 @@ namespace DamageMeter
 {
     internal static class EPPExstension
     {
-        private static readonly List<string> Tol2 = new List<string> {"4477AA", "CC6677"};
+        private static readonly List<string> Tol2 = new List<string> { "4477AA", "CC6677" };
 
-        private static readonly List<string> Tol7 = new List<string> {"332288", "88CCEE", "44AA99", "117733", "DDCC77", "CC6677", "AA4499"};
+        private static readonly List<string> Tol7 = new List<string> { "332288", "88CCEE", "44AA99", "117733", "DDCC77", "CC6677", "AA4499" };
 
-        private static readonly List<string> Tol9 = new List<string> {"332288", "88CCEE", "44AA99", "117733", "999933", "DDCC77", "CC6677", "882255", "AA4499"};
+        private static readonly List<string> Tol9 = new List<string> { "332288", "88CCEE", "44AA99", "117733", "999933", "DDCC77", "CC6677", "882255", "AA4499" };
 
         private static readonly List<string> Tol21 = new List<string>
         {
@@ -52,9 +53,10 @@ namespace DamageMeter
         public static void SetLineChartColors(this ExcelChart chart)
         {
             var i = 0;
-            var nsa = chart.WorkSheet.Drawings.NameSpaceManager.LookupNamespace("a");
             var chartXml = chart.ChartXml;
-            var nsuri = chartXml.DocumentElement.NamespaceURI;
+            const string nsa = "http://schemas.openxmlformats.org/drawingml/2006/main";
+            const string nsuri = "http://schemas.openxmlformats.org/drawingml/2006/chart";
+
             var nsm = new XmlNamespaceManager(chartXml.NameTable);
             nsm.AddNamespace("a", nsa);
             nsm.AddNamespace("c", nsuri);
@@ -117,12 +119,17 @@ namespace DamageMeter
             }
             if (!found) { throw new InvalidOperationException("series not found."); }
 
-            var nsm = chart.WorkSheet.Drawings.NameSpaceManager;
-            var nschart = nsm.LookupNamespace("c");
-            var nsa = nsm.LookupNamespace("a");
-            var node = chart.ChartXml.SelectSingleNode(
-                @"c:chartSpace/c:chart/c:plotArea/c:barChart/c:ser[c:idx[@val='" + i.ToString(CultureInfo.InvariantCulture) + "']]", nsm);
+            const string nschart = "http://schemas.openxmlformats.org/drawingml/2006/chart";
+            const string nsa = "http://schemas.openxmlformats.org/drawingml/2006/main";
+
             var doc = chart.ChartXml;
+            var nsm = new XmlNamespaceManager(doc.NameTable);
+            nsm.AddNamespace("c", nschart);
+            nsm.AddNamespace("a", nsa);
+
+            var node = doc.SelectSingleNode(
+                $@"c:chartSpace/c:chart/c:plotArea/c:barChart/c:ser[c:idx[@val='{i}']]",
+                nsm);
 
             var spPr = doc.CreateElement("c:spPr", nschart);
             spPr.AppendChild(doc.CreateElement("a:noFill", nsa));
@@ -135,10 +142,11 @@ namespace DamageMeter
 
         public static void FirstAxisDate(this ExcelBarChart chart, int maxVal)
         {
-            var nsm = chart.WorkSheet.Drawings.NameSpaceManager;
-            var nschart = nsm.LookupNamespace("c");
-            var node = chart.ChartXml.SelectSingleNode(@"c:chartSpace/c:chart/c:plotArea/c:catAx[c:axId[@val='1']]", nsm);
+            const string nschart = "http://schemas.openxmlformats.org/drawingml/2006/chart";
             var doc = chart.ChartXml;
+            var nsm = new XmlNamespaceManager(doc.NameTable);
+            nsm.AddNamespace("c", nschart);
+            var node = chart.ChartXml.SelectSingleNode(@"c:chartSpace/c:chart/c:plotArea/c:catAx[c:axId[@val='1']]", nsm);
             node = RenameNode(node, nschart, "c:dateAx");
             node.SelectSingleNode("c:auto/@val", nsm).Value = "0";
             node.SelectSingleNode("c:tickLblPos/@val", nsm).Value = "none";
@@ -172,7 +180,7 @@ namespace DamageMeter
         {
             if (node.NodeType == XmlNodeType.Element)
             {
-                var oldElement = (XmlElement) node;
+                var oldElement = (XmlElement)node;
                 var newElement = node.OwnerDocument.CreateElement(qualifiedName, namespaceUri);
                 while (oldElement.HasAttributes) { newElement.SetAttributeNode(oldElement.RemoveAttributeNode(oldElement.Attributes[0])); }
                 while (oldElement.HasChildNodes) { newElement.AppendChild(oldElement.FirstChild); }
@@ -182,26 +190,27 @@ namespace DamageMeter
             return null;
         }
 
-        public static void FixEppPlusBug(this ExcelChart chart)
-            //epplus do not renumber series in the chart correctly if inserted not in sequence.
-        {
-            var xml = chart.ChartXml;
-            var nsm = chart.WorkSheet.Drawings.NameSpaceManager;
-            var badattr = xml.SelectNodes("//c:idx", nsm);
-            var idx = 0;
-            foreach (XmlNode attr in badattr)
-            {
-                attr.Attributes["val"].Value = idx.ToString();
-                idx++;
-            }
-            badattr = xml.SelectNodes("//c:order", nsm);
-            idx = 0;
-            foreach (XmlNode attr in badattr)
-            {
-                attr.Attributes["val"].Value = idx.ToString();
-                idx++;
-            }
-        }
+        //Never called.
+        //public static void FixEppPlusBug(this ExcelChart chart)
+        //    //epplus do not renumber series in the chart correctly if inserted not in sequence.
+        //{
+        //    var xml = chart.ChartXml;
+        //    var nsm = chart.WorkSheet.Drawings.NameSpaceManager;
+        //    var badattr = xml.SelectNodes("//c:idx", nsm);
+        //    var idx = 0;
+        //    foreach (XmlNode attr in badattr)
+        //    {
+        //        attr.Attributes["val"].Value = idx.ToString();
+        //        idx++;
+        //    }
+        //    badattr = xml.SelectNodes("//c:order", nsm);
+        //    idx = 0;
+        //    foreach (XmlNode attr in badattr)
+        //    {
+        //        attr.Attributes["val"].Value = idx.ToString();
+        //        idx++;
+        //    }
+        //}
     }
 
     internal class ExcelExporter
@@ -273,11 +282,11 @@ namespace DamageMeter
                     ws.Cells[2, 11].Value = LP.Dps;
                     ws.Cells[2, 12].Value = LP.Damage;
                     var i = 2;
-                    foreach (var user in data.members.Where(x=>x.playerTotalDamage!="0").OrderByDescending(x => long.Parse(x.playerTotalDamage)))
+                    foreach (var user in data.members.Where(x => x.playerTotalDamage != "0").OrderByDescending(x => long.Parse(x.playerTotalDamage)))
                     {
                         i++;
                         ws.Cells[i, 1].Value = i - 2;
-                        AddImage(ws, i, 1, ClassIcons.Instance.GetBitmap((PlayerClass) Enum.Parse(typeof(PlayerClass), user.playerClass)));
+                        AddImage(ws, i, 1, ClassIcons.Instance.GetBitmap((PlayerClass)Enum.Parse(typeof(PlayerClass), user.playerClass)));
                         ws.Cells[i, 2].Value = $"{user.playerServer}: {user.playerName}";
                         ws.Cells[i, 2].Hyperlink = CreateUserSheet(package.Workbook, user, exdata, details);
                         ws.Cells[i, 3].Value = long.Parse(user.playerDeaths);
@@ -321,7 +330,7 @@ namespace DamageMeter
                         ws.Cells[j, 2].Value = hotdot.Name;
                         if (!string.IsNullOrEmpty(hotdot.Tooltip)) { ws.Cells[j, 2].AddComment("" + hotdot.Tooltip, "info"); }
                         ws.Cells[j, 2, j, 11].Merge = true;
-                        ws.Cells[j, 12].Value = (double) ((List<List<int>>)buf[1])[0][1] / 100;
+                        ws.Cells[j, 12].Value = (double)((List<List<int>>)buf[1])[0][1] / 100;
                         ws.Cells[j, 12].Style.Numberformat.Format = "0%";
                     }
                     border = ws.Cells[i + 3, 1, j, 12].Style.Border;
@@ -375,7 +384,7 @@ namespace DamageMeter
 
         private static void AddCharts(ExcelWorksheet ws, ExtendedStats exdata, ExcelWorksheet details, int startrow, string name)
         {
-            var time = (int) (exdata.LastTick / TimeSpan.TicksPerSecond - exdata.FirstTick / TimeSpan.TicksPerSecond);
+            var time = (int)(exdata.LastTick / TimeSpan.TicksPerSecond - exdata.FirstTick / TimeSpan.TicksPerSecond);
             var offset = exdata.PlayerBuffs.Keys.ToList().IndexOf(name) + 1;
             var bossSheet = name == LP.Boss;
             if (!bossSheet && offset <= 0)
@@ -419,7 +428,7 @@ namespace DamageMeter
             serieDps.Header = name + " " + LP.AvgDPS;
             if (bossSheet)
             {
-                typeDps.YAxis.MaxValue = details.Cells[3, offset + 6, time + 3, offset + 6].Max(x => (long) x.Value);
+                typeDps.YAxis.MaxValue = details.Cells[3, offset + 6, time + 3, offset + 6].Max(x => (long)x.Value);
                 typeDps.YAxis.MinValue = 0;
                 var col = 4;
                 foreach (var user in exdata.PlayerBuffs)
@@ -454,9 +463,9 @@ namespace DamageMeter
                 (buff as ExcelBarChart).InvisibleSerie(serieStart);
                 var serieTime = typeBuff.Series.Add(details.Cells[3, offset + 2, numInt + 3, offset + 2], details.Cells[3, offset, numInt + 3, offset]);
                 serieTime.Header = LP.Time;
-                typeBuff.YAxis.MajorUnit = time >= 40 ? (double) (time / 20) / 86400F : 1F / 86400F;
+                typeBuff.YAxis.MajorUnit = time >= 40 ? (double)(time / 20) / 86400F : 1F / 86400F;
                 typeBuff.YAxis.MinValue = 0F;
-                typeBuff.YAxis.MaxValue = (double) time / 86400F;
+                typeBuff.YAxis.MaxValue = (double)time / 86400F;
                 typeBuff.XAxis.Orientation = eAxisOrientation.MaxMin;
                 typeBuff.XAxis.MinorTickMark = eAxisTickMark.None;
                 typeBuff.YAxis.Crosses = eCrosses.Max;
@@ -501,7 +510,7 @@ namespace DamageMeter
             for (var t = 0; t <= exdata.LastTick / TimeSpan.TicksPerSecond - exdata.FirstTick / TimeSpan.TicksPerSecond; t++)
             {
                 details.Cells[t + 3, 1].Value = t;
-                details.Cells[t + 3, 2].Value = (double) t / 86400;
+                details.Cells[t + 3, 2].Value = (double)t / 86400;
             }
             var buffnum = 0;
             var j = 0;
@@ -515,8 +524,8 @@ namespace DamageMeter
                 {
                     j++;
                     details.Cells[2 + j, 3].Value = buffnum;
-                    details.Cells[2 + j, 4].Value = (double) (buff.Begin - exdata.FirstTick) / TimeSpan.TicksPerDay;
-                    details.Cells[2 + j, 5].Value = (double) (buff.End - buff.Begin) / TimeSpan.TicksPerDay;
+                    details.Cells[2 + j, 4].Value = (double)(buff.Begin - exdata.FirstTick) / TimeSpan.TicksPerDay;
+                    details.Cells[2 + j, 5].Value = (double)(buff.End - buff.Begin) / TimeSpan.TicksPerDay;
                 }
             }
             long dealtDamage = 0;
@@ -548,7 +557,7 @@ namespace DamageMeter
                     if (j >= xCMA) { details.Cells[j + 2 - xCMA / 2, 8].Value = last.ToArray().Sum(x => x) / xCMA / 1000; }
                     if (j != 1) { details.Cells[j + 2, 9].Value = dealtDamage / (j - 1) / 1000; }
                 }
-                details.Cells[j + 2, 10].Value = totalDamage == 0 ? 0 : (double) (totalDamage - dealtDamage) / totalDamage;
+                details.Cells[j + 2, 10].Value = totalDamage == 0 ? 0 : (double)(totalDamage - dealtDamage) / totalDamage;
             }
             var i = 4;
             foreach (var user in exdata.PlayerBuffs)
@@ -579,8 +588,8 @@ namespace DamageMeter
                     {
                         j++;
                         details.Cells[2 + j, i].Value = buffnum;
-                        details.Cells[2 + j, i + 1].Value = (double) (buff.Begin - exdata.FirstTick) / TimeSpan.TicksPerDay;
-                        details.Cells[2 + j, i + 2].Value = (double) (buff.End - buff.Begin) / TimeSpan.TicksPerDay;
+                        details.Cells[2 + j, i + 1].Value = (double)(buff.Begin - exdata.FirstTick) / TimeSpan.TicksPerDay;
+                        details.Cells[2 + j, i + 2].Value = (double)(buff.End - buff.Begin) / TimeSpan.TicksPerDay;
                     }
                 }
                 if (user.Value.Death.Count() > 0)
@@ -592,8 +601,8 @@ namespace DamageMeter
                     {
                         j++;
                         details.Cells[2 + j, i].Value = buffnum;
-                        details.Cells[2 + j, i + 1].Value = (double) (buff.Begin - exdata.FirstTick) / TimeSpan.TicksPerDay;
-                        details.Cells[2 + j, i + 2].Value = (double) (buff.End - buff.Begin) / TimeSpan.TicksPerDay;
+                        details.Cells[2 + j, i + 1].Value = (double)(buff.Begin - exdata.FirstTick) / TimeSpan.TicksPerDay;
+                        details.Cells[2 + j, i + 2].Value = (double)(buff.End - buff.Begin) / TimeSpan.TicksPerDay;
                     }
                 }
                 if (user.Value.Aggro(exdata.Entity).Count() > 0)
@@ -605,8 +614,8 @@ namespace DamageMeter
                     {
                         j++;
                         details.Cells[2 + j, i].Value = buffnum;
-                        details.Cells[2 + j, i + 1].Value = (double) (buff.Begin - exdata.FirstTick) / TimeSpan.TicksPerDay;
-                        details.Cells[2 + j, i + 2].Value = (double) (buff.End - buff.Begin) / TimeSpan.TicksPerDay;
+                        details.Cells[2 + j, i + 1].Value = (double)(buff.Begin - exdata.FirstTick) / TimeSpan.TicksPerDay;
+                        details.Cells[2 + j, i + 2].Value = (double)(buff.End - buff.Begin) / TimeSpan.TicksPerDay;
                     }
                 }
                 dealtDamage = 0;
@@ -661,11 +670,11 @@ namespace DamageMeter
             return 0d;
         }
 
-        private static void AddImage(ExcelWorksheet ws, int rowIndex, int columnIndex, Bitmap image)
+        private static void AddImage(ExcelWorksheet ws, int rowIndex, int columnIndex, byte[] imageBytes)
         {
             //How to Add a Image using EP Plus
-            if (image == null) { return; }
-            var picture = ws.Drawings.AddPicture("pic" + rowIndex + columnIndex, image);
+            if (imageBytes is not { Length: > 0 }) { return; }
+            var picture = ws.Drawings.AddPicture("pic" + rowIndex + columnIndex, new MemoryStream(imageBytes));
             picture.From.Column = columnIndex - 1;
             picture.From.Row = rowIndex - 1;
             picture.From.ColumnOff = 12000;
@@ -680,7 +689,7 @@ namespace DamageMeter
             ws.DefaultRowHeight = 30;
             ws.Cells.Style.Font.Size = 12;
             ws.Cells.Style.Font.Name = "Arial";
-            AddImage(ws, 1, 1, ClassIcons.Instance.GetBitmap((PlayerClass) Enum.Parse(typeof(PlayerClass), user.playerClass)));
+            AddImage(ws, 1, 1, ClassIcons.Instance.GetBitmap((PlayerClass)Enum.Parse(typeof(PlayerClass), user.playerClass)));
             ws.Cells[1, 2].Value = $"{user.playerServer}: {user.playerName}";
             ws.Cells[1, 2, 1, 11].Merge = true;
             ws.Cells[1, 2, 1, 11].Style.Font.Bold = true;
@@ -696,7 +705,7 @@ namespace DamageMeter
             ws.Cells[2, 11].Value = LP.AvgWhite;
             var i = 2;
 
-            if(user.playerTotalDamage!="0")
+            if (user.playerTotalDamage != "0")
                 foreach (var stat in exdata.PlayerSkillsAggregated[user.playerServer + "/" + user.playerName].OrderByDescending(x => x.Amount()))
                 {
                     i++;
