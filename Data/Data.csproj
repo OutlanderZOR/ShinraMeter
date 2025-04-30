@@ -6,9 +6,9 @@
     <OutputPath>bin\$(Configuration)\</OutputPath>
     <UseWindowsForms>true</UseWindowsForms>
     <UseWPF>true</UseWPF>
-    <TargetFrameworks>netcoreapp3.1;net471</TargetFrameworks>
+    <TargetFrameworks>net9.0-windows</TargetFrameworks>
   </PropertyGroup>
-  <ItemGroup Condition="$(TargetFramework.StartsWith('netcore'))">
+  <ItemGroup>
     <COMReference Include="SpeechLib.dll">
       <Guid>c866ca3a-32f7-11d2-9602-00c04f8ee628</Guid>
       <VersionMajor>5</VersionMajor>
@@ -17,9 +17,6 @@
       <Lcid>0</Lcid>
       <Isolated>false</Isolated>
     </COMReference>
-  </ItemGroup>
-  <ItemGroup Condition="$(TargetFramework.StartsWith('net4'))">
-    <Reference Include="System.Speech" />
   </ItemGroup>
   <PropertyGroup>
     <ResolveComReferenceSilent>True</ResolveComReferenceSilent>
@@ -32,10 +29,10 @@
     <DebugType>embedded</DebugType>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="log4net" Version="2.0.8" />
-    <PackageReference Include="NAudio" Version="1.10.0" />
-    <PackageReference Include="Newtonsoft.Json" Version="12.0.3" />
-    <PackageReference Include="System.Management" Version="4.7.0" />
+    <PackageReference Include="log4net" Version="3.0.4" />
+    <PackageReference Include="NAudio" Version="2.2.1" />
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
+    <PackageReference Include="System.Management" Version="9.0.4" />
     <PackageReference Include="System.Net.Http" Version="4.3.4" />
     <PackageReference Include="System.Net.NameResolution" Version="4.3.0" />
   </ItemGroup>

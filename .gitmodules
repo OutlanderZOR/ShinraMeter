@@ -3,4 +3,4 @@
 	url = https://github.com/OutlanderZOR/Tera.Core
 [submodule "resources/data"]
 	path = resources/data
-	url = https://github.com/OutlanderZOR/TeraDpsMeterData
+	url = https://github.com/neowutran/TeraDpsMeterData

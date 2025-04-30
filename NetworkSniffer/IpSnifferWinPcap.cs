@@ -11,7 +11,6 @@ using PacketDotNet;
 using PacketDotNet.Utils;
 using SharpPcap;
 using SharpPcap.LibPcap;
-using SharpPcap.WinPcap;
 
 namespace NetworkSniffer
 {
@@ -63,7 +62,7 @@ namespace NetworkSniffer
             {
                 device.OnPacketArrival += device_OnPacketArrival;
 
-                try { device.Open(DeviceMode.Normal, 100); }
+                try { device.Open(DeviceModes.None, 100); }
                 catch (Exception e)
                 {
                     Logger.Warn($"Failed to open device {device.Name}. {e.Message}");
@@ -107,17 +106,18 @@ namespace NetworkSniffer
             handler?.Invoke(obj);
         }
 
-        private void device_OnPacketArrival(object sender, CaptureEventArgs e)
+        private void device_OnPacketArrival(object sender, PacketCapture e)
         {
             IPv4Packet ipPacket;
             try
             {
-                if (e.Packet.LinkLayerType != LinkLayers.Null)
+                var data = e.Data.ToArray();
+                if (e.Device.LinkType != LinkLayers.Null)
                 {
-                    var linkPacket = Packet.ParsePacket(e.Packet.LinkLayerType, e.Packet.Data);
+                    var linkPacket = Packet.ParsePacket(e.Device.LinkType, data);
                     ipPacket = linkPacket.PayloadPacket as IPv4Packet;
                 }
-                else { ipPacket = new IPv4Packet(new ByteArraySegment(e.Packet.Data, 4, e.Packet.Data.Length - 4)); }
+                else { ipPacket = new IPv4Packet(new ByteArraySegment(data, 4, data.Length - 4)); }
                 if (ipPacket == null) { return; }
             }
             catch

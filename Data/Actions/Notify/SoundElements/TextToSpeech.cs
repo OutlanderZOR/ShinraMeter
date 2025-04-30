@@ -26,21 +26,6 @@ namespace Data.Actions.Notify.SoundElements
         public int Rate { get; set; }
         public string CultureInfo { get; set; }
 
-#if NETFULL
-        public void Play()
-        {
-            using (var synth = new System.Speech.Synthesis.SpeechSynthesizer())
-            {
-                synth.SelectVoiceByHints((System.Speech.Synthesis.VoiceGender)VoiceGender, (System.Speech.Synthesis.VoiceAge)VoiceAge, VoicePosition, new CultureInfo(CultureInfo));
-                synth.SetOutputToDefaultAudioDevice();
-                synth.Volume = Volume;
-                synth.Rate = Rate;
-                synth.Speak(Text);
-            }
-        }
-#endif
-
-#if NETCORE
         public void Play() {
             var synth = new SpeechLib.SpVoiceClass();
             var voices = synth.GetVoices("", $"Gender={VoiceGender};Age={VoiceAge};Language={new CultureInfo(CultureInfo).LCID:X}");
@@ -49,7 +34,6 @@ namespace Data.Actions.Notify.SoundElements
             synth.Rate = Rate;
             synth.Speak(Text);
         }
-#endif
     }
     //
     // Summary:

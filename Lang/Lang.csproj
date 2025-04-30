@@ -1,6 +1,6 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFrameworks>netcoreapp3.1;net471</TargetFrameworks>
+    <TargetFrameworks>net9.0-windows</TargetFrameworks>
     <AssemblyTitle>Lang</AssemblyTitle>
     <Product>Lang</Product>
     <NeutralLanguage>en-US</NeutralLanguage>
